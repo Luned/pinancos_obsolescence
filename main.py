@@ -1,7 +1,6 @@
 from random import randrange
 
-# TODO if using Github diff deployment on HeroKu uncomment the next line
-#import os
+import os
 import discord
 from discord.ext import commands
 
@@ -28,22 +27,14 @@ from discord.ext import commands
 #        Furthermore: the p.sendall feature described later in the code allows the user to set
 #        Passel so that all pinned messages get sent to the pins archive channel.
 
+intents = discord.Intents.default()
+intents.message_content = True
+intents.guilds = True
+
 # TODO change command here if you want to use another command, replace p. with anything you want inside the single ('') quotes
-client = commands.Bot(command_prefix='p.',
+client = commands.Bot(command_prefix='p.', intents=intents,
                       status='Online', case_insensitive=True)
 client.remove_command("help")
-
-# TODO change mode to 1 or 2 here
-mode = 2
-
-# TODO 
-# sendall is set to 0 by default, change to 1 if you want
-# the bot to send all pinned messages to the pins channel
-sendall = 0
-
-# TODO 
-# replace the 0 with the pins channel ID for your sever
-pins_channel = 948375476685111296/954794285222486046
 
 # TODO
 # add any black listed channel IDs as a list separated by a comma (,)
@@ -73,6 +64,8 @@ EMBED_COLORS = [
     discord.Colour.magenta(),
 ]
 
+PINS_CHANNEL = os.environ.get('PINS_CHANNEL')
+
 # When the bot is ready following sets the status of the bot
 @client.event
 async def on_ready():
@@ -82,12 +75,10 @@ async def on_ready():
 # Command to check what the settings of the bot
 @client.command(name='settings', pass_context=True)
 async def settings(ctx):
-    if not ctx.message.author.guild_permissions.administrator:
+    if not ctx.message.author.guild_permissions.manage_messages:
         return
 
-    await ctx.send("The mode you have setup is: " + str(mode))
-    await ctx.send("Sendall is toggled to: " + str(sendall))
-    await ctx.send("The pins channel for this server is: " + ctx.channel.guild.get_channel(pins_channel).mention)
+    await ctx.send(f"The pins channel for this server is: {ctx.channel.guild.get_channel(PINS_CHANNEL).mention}")
     await ctx.send("Black listed channels are: ")
     for c in blacklisted_channels:
         try:
@@ -101,7 +92,7 @@ async def settings(ctx):
 @client.command(name='pins', pass_context=True)
 async def pins(ctx):
     numPins = await ctx.message.channel.pins()
-    await ctx.send(ctx.message.channel.mention + " has " + str(len(numPins)) + " pins.")
+    await ctx.send(f"{ctx.message.channel.mention} has {len(numPins)} pins.")
 
 # The method that takes care of pin updates in a server
 @client.event
@@ -121,95 +112,36 @@ async def on_guild_channel_pins_update(channel, last_pin):
         # checks to see if pins channel exists in the server
         channnelList = channel.guild.channels
         for channel in channnelList:
-            if int(pins_channel) == int(channel.id):
+            if int(PINS_CHANNEL) == int(channel.id):
                 isChannelThere = True
+                break
 
         # checks to see if pins channel exists or has been deleted
         if not isChannelThere:
             await channel.send("Check to see if the pins archive channel during setup has been deleted")
             return
 
-        # only happens if send all is toggled on
-        if len(numPins) < 49 and sendall == 1:
-            last_pinned = numPins[0]
+        if len(numPins) == 50:
+            last_pinned = numPins[len(numPins) - 1]
             pinEmbed = discord.Embed(
                 description="\"" + last_pinned.content + "\"",
-                colour=EMBED_COLORS[randomColor]
+                colour=EMBED_COLORS[randomColor],
             )
             # checks to see if pinned message has attachments
             attachments = last_pinned.attachments
             if len(attachments) >= 1:
                 pinEmbed.set_image(url=attachments[0].url)
-            pinEmbed.add_field(
-                name="Jump", value=last_pinned.jump_url, inline=False)
-            pinEmbed.set_footer(
-                text="sent in: " + last_pinned.channel.name + " - at: " + str(last_pinned.created_at))
-            pinEmbed.set_author(name='Sent by ' + last_pinned.author.name)
-            await channel.guild.get_channel(int(pins_channel)).send(embed=pinEmbed)
-            
+            #pinEmbed.set_thumbnail(url=last_pinned.aut hor.display_avatar)
+            pinEmbed.add_field(name="Jump", value=last_pinned.jump_url, inline=False)
+            pinEmbed.set_footer(text=f"sent in: {last_pinned.channel.name} - at: {str(last_pinned.created_at)}")
+            pinEmbed.set_author(name=f'Sent by {last_pinned.author.name}', icon_url=last_pinned.author.display_avatar)
+            await last_pinned.guild.get_channel(int(PINS_CHANNEL)).send(embed=pinEmbed)
+
             # remove this message if you do not want the bot to send a message when you pin a message
-            await last_pinned.channel.send(
-                "See pinned message in " + channel.guild.get_channel(int(pins_channel)).mention)
-            return
-
-        # if guild mode is one does the process following mode 1
-        if mode == 1:
-            last_pinned = numPins[len(numPins) - 1]
-            # sends extra messages
-            if len(numPins) == 50:
-                last_pinned = numPins[0]
-                pinEmbed = discord.Embed(
-                    # title="Sent by " + last_pinned.author.name,
-                    description="\"" + last_pinned.content + "\"",
-                    colour=EMBED_COLORS[randomColor]
-                )
-                # checks to see if pinned message has attachments
-                attachments = last_pinned.attachments
-                if len(attachments) >= 1:
-                    pinEmbed.set_image(url=attachments[0].url)
-                pinEmbed.add_field(
-                    name="Jump", value=last_pinned.jump_url, inline=False)
-                pinEmbed.set_footer(
-                    text="sent in: " + last_pinned.channel.name + " - at: " + str(last_pinned.created_at))
-                pinEmbed.set_author(name='Sent by ' + last_pinned.author.name)
-                await channel.guild.get_channel(int(pins_channel)).send(embed=pinEmbed)
-
-                # remove this message if you do not want the bot to send a message when you pin a message
-                await last_pinned.channel.send(
-                    "See pinned message in " + channel.guild.get_channel(int(pins_channel)).mention)
-                await last_pinned.unpin()
-
-        # if guild mode is two follows the process for mode 2
-        if mode == 2:
-            last_pinned = numPins[0]
-            if len(numPins) == 50:
-                last_pinned = numPins[len(numPins) - 1]
-                pinEmbed = discord.Embed(
-                    # title="Sent by " + last_pinned.author.name,
-                    description="\"" + last_pinned.content + "\"",
-                    colour=EMBED_COLORS[randomColor]
-                )
-                # checks to see if pinned message has attachments
-                attachments = last_pinned.attachments
-                if len(attachments) >= 1:
-                    pinEmbed.set_image(url=attachments[0].url)
-                pinEmbed.add_field(
-                    name="Jump", value=last_pinned.jump_url, inline=False)
-                pinEmbed.set_footer(
-                    text="sent in: " + last_pinned.channel.name + " - at: " + str(last_pinned.created_at))
-                pinEmbed.set_author(name='Sent by ' + last_pinned.author.name)
-                await last_pinned.guild.get_channel(int(pins_channel)).send(embed=pinEmbed)
-
-                # remove this message if you do not want the bot to send a message when you pin a message
-                await last_pinned.channel.send(
-                    "See oldest pinned message in " + channel.guild.get_channel(int(pins_channel)).mention)
-                await last_pinned.unpin()
-    except:
+            await last_pinned.channel.send(f"See oldest pinned message in {channel.guild.get_channel(int(PINS_CHANNEL)).mention}")
+            await last_pinned.unpin()
+    except Exception as e:
+        print(e)
         print("unpinned a message, not useful for bot so does nothing")
 
-
-# TODO Replace TOKEN with the token from discord developer portal 
-client.run('MTAwOTEyNjIzMTU4Njg5ODAyMg.GOPYKu.B3uxCiiU9IEOp3mWgoPe5Rq6b6w5Ynptc25Ews')
-
-# TODO If using GitHub diff deployment on HeroKu comment out the above line with '#' and remove '#' from the line below to uncomment it. 
-#client.run(os.environ.get('TOKEN'))
+client.run(os.environ.get("TOKEN"))
