@@ -4,34 +4,13 @@ import os
 import discord
 from discord.ext import commands
 
-# Author: hyppytyynytyydytys#1010
-# Created: 26 MAY 2020
-# Last updated: 17 JULY 2022
-# About: This is a version of Passel Bot that should ONLY be used as a private server bot.
-#        Follow the instructions here on how to set up with heroku:
-#
-#        Passel Bot is a solution to the number of limited number of pins in a discord server.
-#        It manages pins in 2 modes, Mode 1 and Mode 2. 
-#
-#        More information can be found on https://passelbot.wixsite.com/home
-#        Passel Support Server: https://discord.gg/wmSsKCX
-#
-#        Mode 1: In mode 1, the most recent pinned message gets sent to a pins archive
-#        channel of your choice. This means that the most recent pin wont be viewable in
-#        the pins tab, but will be visible in the pins archive channel that you chose during setup
-#
-#        Mode 2: In mode 2, the oldest pinned message gets sent to a pins archive channel of
-#        your choice. This means that the most recent pin will be viewable in the pins tab, and
-#        the oldest pin will be unpinned and put into the pins archive channel
-#
-#        Furthermore: the p.sendall feature described later in the code allows the user to set
-#        Passel so that all pinned messages get sent to the pins archive channel.
+# Author: Luned
+# Created: 13 March 2023
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
 
-# TODO change command here if you want to use another command, replace p. with anything you want inside the single ('') quotes
 client = commands.Bot(command_prefix='p.', intents=intents,
                       status='Online', case_insensitive=True)
 client.remove_command("help")
