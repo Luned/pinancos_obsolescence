@@ -2,13 +2,12 @@
 name = "passel"
 version = "0.1.0"
 description = ""
-authors = ["Joana Teixeira <joana.teixeira@vizidox.com>"]
+authors = ["Joana Teixeira <joanbteixeira@gmail.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.9"
-discord.py = "2.2.2"
-
-[tool.poetry.dev-dependencies]
+python = "~3.9.8"
+discord-py = "^2.5.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
